@@ -24,21 +24,19 @@ pub fn build(b: *std.Build) void {
     defer flags.deinit();
 
     const exceptions_int: i8 = if (exceptions) 0 else 1;
-    const std_fmt_int: i8 = if (fmt_mode == .StdFormat) 1 else 0;
 
     flags.appendSlice(&.{
         "-std=c++20",
         // options
         // "-DSPDLOG_WCHAR_TO_UTF8_SUPPORT=0", // windows only
-        "-DSPDLOG_WCHAR_FILENAMES=0",
-        "-DSPDLOG_CLOCK_COARSE=0",
-        "-DSPDLOG_PREVENT_CHILD_FD=0",
-        "-DSPDLOG_NO_THREAD_ID=0",
-        "-DSPDLOG_NO_TLS=0",
-        "-DSPDLOG_NO_ATOMIC_LEVELS=0",
-        "-DSPDLOG_DISABLE_DEFAULT_LOGGER=0",
+        // "-DSPDLOG_WCHAR_FILENAMES=0",
+        // "-DSPDLOG_CLOCK_COARSE=0",
+        // "-DSPDLOG_PREVENT_CHILD_FD=0",
+        // "-DSPDLOG_NO_THREAD_ID=0",
+        // "-DSPDLOG_NO_TLS=0",
+        // "-DSPDLOG_NO_ATOMIC_LEVELS=0",
+        // "-DSPDLOG_DISABLE_DEFAULT_LOGGER=0",
         std.fmt.allocPrint(b.allocator, "-DSPDLOG_NO_EXCEPTIONS={any}", .{exceptions_int}) catch @panic("OOM"),
-        std.fmt.allocPrint(b.allocator, "-DSPDLOG_USE_STD_FORMAT={any}", .{std_fmt_int}) catch @panic("OOM"),
         // because we're using static lib
         "-DSPDLOG_COMPILED_LIB",
     }) catch @panic("OOM");
@@ -60,7 +58,10 @@ pub fn build(b: *std.Build) void {
                 flags.append("-DFMT_EXCEPTIONS=0") catch @panic("OOM");
             }
         },
-        .StdFormat => {},
+        .StdFormat => {
+            std.log.warn("StdFormat is an unsupported fmt method when compiling with zig", .{});
+            flags.append("-DSPDLOG_USE_STD_FORMAT") catch @panic("OOM");
+        },
     }
 
     spdlog.addCSourceFiles(&.{
